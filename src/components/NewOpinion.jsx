@@ -1,23 +1,34 @@
-import { useActionState } from "react";
+import { useActionState, useContext } from "react";
+import { OpinionsContext } from "../store/opinions-context";
 
 export function NewOpinion() {
-  const newOpinionAction = (prevState, formData) => {
-    const username = formData.get("userName");
+  const { addOpinion } = useContext(OpinionsContext);
+
+  const newOpinionAction = async (prevState, formData) => {
+    const userName = formData.get("userName");
     const title = formData.get("title");
     const body = formData.get("body");
 
     let errors = [];
 
-    if (!username.trim()) errors.push("Username is required");
+    if (!userName.trim()) errors.push("Username is required");
     if (title.trim().length < 5)
-      errors.push("Enter a valid title atleast 5 characters.");
+      errors.push("Enter a valid title at least 5 characters.");
     if (body.trim().length < 10 || body.trim().length > 300)
       errors.push("Opinion must be between 10 and 300 characters long.");
 
     if (errors.length > 0)
       return { errors, enteredValues: { username, title, body } };
 
-    return { errors: null };
+    try {
+      await addOpinion({ title, body, userName });
+      return { errors: null, enteredValues: null };
+    } catch (error) {
+      return {
+        errors: ["Failed to submit opinion. Please try again."],
+        enteredValues: { userName, title, body },
+      };
+    }
   };
 
   const [formState, formAction] = useActionState(newOpinionAction, {
